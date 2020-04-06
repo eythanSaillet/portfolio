@@ -5,6 +5,9 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import Stats from './js/Stats'
 
+// Class
+import NoiseWave from './js/NoiseWave'
+
 
 /**
  * Cursor
@@ -59,8 +62,7 @@ document.body.appendChild( stats.domElement )
  */
 
 const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
-camera.position.z = 4
-camera.position.y = 2
+camera.position.z = 30
 scene.add(camera)
 
 /**
@@ -68,7 +70,11 @@ scene.add(camera)
  */
 
 // Debug object
-scene.add(new THREE.Mesh(new THREE.SphereGeometry(), new THREE.MeshNormalMaterial()))
+// scene.add(new THREE.Mesh(new THREE.SphereGeometry(), new THREE.MeshNormalMaterial()))
+
+// Noise wave
+let noiseWave = new NoiseWave()
+scene.add(noiseWave.group)
 
 /**
  * Renderer
