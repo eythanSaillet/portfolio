@@ -75,6 +75,7 @@ scene.add(camera)
 // Noise wave
 let noiseWave = new NoiseWave()
 scene.add(noiseWave.group)
+// scene.add(noiseWave.testGroup)
 
 /**
  * Renderer
@@ -126,6 +127,11 @@ const loop = () =>
 
     // Update framerate info
     stats.update()
+
+    // Update noise wave
+    noiseWave.applyNoiseOnVectors()
+    noiseWave.updatePlane()
+    noiseWave.updateLines()
 
     // Render
     renderer.render(scene, camera)
