@@ -9,21 +9,23 @@ import SimplexNoise from 'simplex-noise'
 
 export default class NoiseWave
 {
-    constructor()
+    constructor(width, height, widthSegments, heightSegments, position, rotation)
     {
         // System properties
-        this.width = 20
-        this.height = 50
-        this.widthNumber = 20
-        this.heightNumber = 50
+        this.width = width
+        this.height = height
+        this.widthSegments = widthSegments
+        this.heightSegments = heightSegments
+
+        this.position = position
+        this.rotation = rotation
 
         this.vectorMatrix = []
         this.group = new THREE.Group()
-        this.linesGroup = new THREE.Group()
 
         // Setup noise
-        this.noiseFactor = 7
-        this.noiseScale = 0.12
+        this.noiseFactor = 1
+        this.noiseScale = 0.2
         this.simplex = new SimplexNoise()
         this.zNoise = 0
         this.zNoiseSpeed = 0.003
@@ -37,14 +39,8 @@ export default class NoiseWave
         // Draw plane from vectors
         this.createPlane()
 
-        // Draw fake wireframe lines from vectors
-        this.linesGroup = new THREE.Group()
-        this.verticalLinesGroup = new THREE.Group()
-        this.horizontalLinesGroup = new THREE.Group()
-        this.createLines()
-
-        // Place the group at the center of the scene
-        this.group.position.set(- this.width / 2, - this.height / 2, 0)
+        this.group.position.set(position.x, position.y, position.z)
+        this.group.rotation.set(rotation.x, rotation.y, rotation.z)
         
         // Test shit
         // this.testGroup = new THREE.Group()
@@ -57,12 +53,12 @@ export default class NoiseWave
     setupVectorMatrix()
     {
         // Create a vector field from the system properties
-        for (let i = 0; i < this.widthNumber; i++)
+        for (let i = 0; i < this.widthSegments; i++)
         {
             let tab = []
-            for (let j = 0; j < this.heightNumber; j++)
+            for (let j = 0; j < this.heightSegments; j++)
             {
-                let point = new THREE.Vector3(i * this.width / this.widthNumber, j * this.height / this.heightNumber, 0)
+                let point = new THREE.Vector3(i * this.width / this.widthSegments, j * this.height / this.heightSegments, 0)
                 tab.push(point)
             }
             this.vectorMatrix.push(tab)
@@ -75,9 +71,9 @@ export default class NoiseWave
         this.zNoise += this.zNoiseSpeed
 
         // Apply simplex noise on the vector field
-        for (let i = 0; i < this.widthNumber; i++)
+        for (let i = 0; i < this.widthSegments; i++)
         {
-            for (let j = 0; j < this.heightNumber; j++)
+            for (let j = 0; j < this.heightSegments; j++)
             {
                 this.vectorMatrix[i][j].z = (this.simplex.noise3D(i * this.noiseScale, j * this.noiseScale, this.zNoise) + 1) * this.noiseFactor
             }
@@ -87,18 +83,16 @@ export default class NoiseWave
     createPlane()
     {
         // Setup plane mesh
-        const planeMaterial = new THREE.MeshBasicMaterial({color: 0x182073, wireframe: false})
-        const planeGeometry = new THREE.PlaneGeometry((this.widthNumber - 1) * this.width / this.widthNumber, (this.heightNumber - 1) * this.height / this.heightNumber, this.widthNumber - 1, this.heightNumber - 1)
+        const planeMaterial = new THREE.MeshBasicMaterial({color: 0xB43BED, wireframe: true})
+        const planeGeometry = new THREE.PlaneGeometry((this.widthSegments - 1) * this.width / this.widthSegments, (this.heightSegments - 1) * this.height / this.heightSegments, this.widthSegments - 1, this.heightSegments - 1)
         this.plane = new THREE.Mesh(planeGeometry, planeMaterial)
-        this.plane.rotation.z += Math.PI 
-        this.plane.position.set(this.width / 2 - 0.5 * this.width / this.widthNumber, this.height / 2 - 0.5 * this.height / this.heightNumber, - 0.015)
 
         // Apply noise to its vertices
-        for (let i = 0; i < this.heightNumber; i++)
+        for (let i = 0; i < this.heightSegments; i++)
         {
-            for (let j = 0; j < this.widthNumber; j++)
+            for (let j = 0; j < this.widthSegments; j++)
             {
-                this.plane.geometry.vertices[this.widthNumber * i + j].z = this.vectorMatrix[this.widthNumber - j - 1][i].z
+                this.plane.geometry.vertices[this.widthSegments * i + j].z = this.vectorMatrix[this.widthSegments - j - 1][i].z
             }
         }
 
@@ -106,101 +100,14 @@ export default class NoiseWave
         this.group.add(this.plane)
     }
 
-    createLines()
-    {
-        // Create line material
-        const lineMaterial = new LineMaterial(
-        {
-            color: 0x8e88cf,
-            linewidth: 0.001,
-            //resolution:  // to be set by renderer, eventually
-        })
-
-        // Vertical lines
-        for (let i = 0; i < this.widthNumber; i++)
-        {
-            // Push all vectors in the geometry of the line
-            const positions = []
-            for (let j = 0; j < this.heightNumber; j++)
-            {
-                let point = this.vectorMatrix[i][j]
-                positions.push(point.x, point.y, point.z)
-            }
-
-            // Create geometry from its vector array
-            const lineGeometry = new LineGeometry()
-            lineGeometry.setPositions(positions)
-
-            // Create mesh and add it to lines group
-            var lineMesh = new Line2(lineGeometry, lineMaterial)
-            this.verticalLinesGroup.add(lineMesh)
-        }
-        this.linesGroup.add(this.verticalLinesGroup)
-
-        // Horizontal lines
-        for (let i = 0; i < this.heightNumber; i++)
-        {
-            // Push all vectors in the geometry of the line
-            const positions = []
-            for (let j = 0; j < this.widthNumber; j++)
-            {
-                let point = this.vectorMatrix[j][i]
-                positions.push(point.x, point.y, point.z)
-            }
-
-            // Create geometry from its vector array
-            const lineGeometry = new LineGeometry()
-            lineGeometry.setPositions(positions)
-
-            // Create mesh and add it to lines group
-            var lineMesh = new Line2(lineGeometry, lineMaterial)
-            this.horizontalLinesGroup.add(lineMesh)
-        }
-        this.linesGroup.add(this.horizontalLinesGroup)
-
-        // Adding lines group to global group
-        this.group.add(this.linesGroup)
-    }
-
-    updateLines()
-    {
-        // Vertical
-        for (let i = 0; i < this.widthNumber; i++)
-        {
-            // Fill an array with new positions
-            const positions = []
-            for (let j = 0; j < this.heightNumber; j++)
-            {
-                let point = this.vectorMatrix[i][j]
-                positions.push(point.x, point.y, point.z)
-            }
-            // Then apply it to the geometry
-            this.verticalLinesGroup.children[i].geometry.setPositions(positions)
-        }
-
-        // Horizontal
-        for (let i = 0; i < this.heightNumber; i++)
-        {
-            // Fill an array with new positions
-            const positions = []
-            for (let j = 0; j < this.widthNumber; j++)
-            {
-                let point = this.vectorMatrix[j][i]
-                positions.push(point.x, point.y, point.z)
-            }
-            // Then apply it to the geometry
-            this.horizontalLinesGroup.children[i].geometry.setPositions(positions)
-        }
-    }
-
     updatePlane()
     {
         // Update each vertices of the geometry
-        for (let i = 0; i < this.heightNumber; i++)
+        for (let i = 0; i < this.heightSegments; i++)
         {
-            for (let j = 0; j < this.widthNumber; j++)
+            for (let j = 0; j < this.widthSegments; j++)
             {
-                this.plane.geometry.vertices[this.widthNumber * i + j].z = this.vectorMatrix[this.widthNumber - j - 1][i].z
+                this.plane.geometry.vertices[this.widthSegments * i + j].z = this.vectorMatrix[this.widthSegments - j - 1][i].z
             }
         }
         // Make it update

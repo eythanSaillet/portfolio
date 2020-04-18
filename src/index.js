@@ -62,7 +62,7 @@ document.body.appendChild( stats.domElement )
  */
 
 const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
-camera.position.z = 30
+camera.position.z = 10
 scene.add(camera)
 
 /**
@@ -73,8 +73,10 @@ scene.add(camera)
 // scene.add(new THREE.Mesh(new THREE.SphereGeometry(), new THREE.MeshNormalMaterial()))
 
 // Noise wave
-let noiseWave = new NoiseWave()
-scene.add(noiseWave.group)
+let topNoiseWave = new NoiseWave(30, 30, 15, 15, new THREE.Vector3(0, -0.8, 0), new THREE.Vector3(Math.PI / 2, 0, Math.PI / 4 * 3))
+let bottomNoiseWave = new NoiseWave(30, 30, 15, 15, new THREE.Vector3(0, 3.5, 0), new THREE.Vector3(Math.PI / 2, 0, Math.PI / 4 * 3))
+scene.add(topNoiseWave.group)
+scene.add(bottomNoiseWave.group)
 // scene.add(noiseWave.testGroup)
 
 /**
@@ -129,9 +131,12 @@ const loop = () =>
     stats.update()
 
     // Update noise wave
-    noiseWave.applyNoiseOnVectors()
-    noiseWave.updatePlane()
-    noiseWave.updateLines()
+    // Top
+    topNoiseWave.applyNoiseOnVectors()
+    topNoiseWave.updatePlane()
+    // Bottom
+    bottomNoiseWave.applyNoiseOnVectors()
+    bottomNoiseWave.updatePlane()
 
     // Render
     renderer.render(scene, camera)
